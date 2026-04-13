@@ -1,0 +1,25 @@
+
+stages:
+  - test
+  - build
+  - publish
+
+include:
+  # Unit testing
+  - component: $CI_SERVER_FQDN/bioinformatics/pipelines/python/unittesting@0.1.3
+    inputs:
+      stage: test
+  # Build packages
+  - component: $CI_SERVER_FQDN/$CI_PROJECT_PATH/build_package@$CI_COMMIT_SHA
+    inputs:
+      stage: build
+  # Publish packages
+  - component: $CI_SERVER_FQDN/$CI_PROJECT_PATH/publish_package@$CI_COMMIT_SHA
+    inputs:
+      job_name: publish_irods_package
+      stage: publish
+
+# Define rules for the job
+publish_irods_package:
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+/

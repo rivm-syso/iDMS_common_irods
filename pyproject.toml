@@ -1,0 +1,79 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm[toml]>=7"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "idms-common-irods"
+dynamic = ["version"]
+requires-python = ">=3.13"
+description = "Utilities to work with IRODS components (AVUs, physical objects, etc.)"
+dependencies = ["idms.common.constants"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["idms.common.irods*"]
+
+[tool.uv.sources]
+# only works for gitlab ci/cd during uv sync
+"idms.common.constants" = { git = "https://gitlab.rivm.nl/bioinformatics/idms_common_constants.git", branch="main" }
+
+[tool.setuptools_scm]
+fallback_version = "0.0.0"
+version_scheme = "guess-next-dev"
+local_scheme = "node-and-date"
+search_parent_directories = true
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0"
+]
+
+[tool.pytest]
+strict_config = true
+strict_markers = false
+strict_parametrization_ids = false
+strict_xfail = true
+
+addopts = [
+    "--cov=src",
+    "--cov-report=xml",
+    "--cov-report=term-missing",
+    "--junitxml=report.xml",
+    "--doctest-modules"
+]
+
+pythonpath = [
+    ".",
+    "src"
+]
+
+testpaths = [
+    "test",
+]
+
+norecursedirs = [
+    ".git",
+    ".venv",
+]
+
+markers = [
+    "unit: Tests individual functions or small units of code in isolation",
+    "integration: Tests how multiple components or services work together",
+    "e2e: Simulates real-world end-to-end user scenarios",
+    "regression: Ensures that previously fixed bugs stay fixed",
+    "smoke: Quick checks to verify core system functionality",
+]
+
+# pytest-cov configuration
+[tool.coverage.report]
+exclude_lines = [
+    "if __name__ == '__main__'",
+]
+
+omit = [
+    "test/*"
+]
+
+[tool.coverage.xml]
+output = "coverage.xml"
