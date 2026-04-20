@@ -7,7 +7,7 @@ name = "idms-common-irods"
 dynamic = ["version"]
 requires-python = ">=3.13"
 description = "Utilities to work with IRODS components (AVUs, physical objects, etc.)"
-dependencies = ["idms.common.constants"]
+dependencies = ["idms-common-constants"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -15,11 +15,11 @@ include = ["idms.common.irods*"]
 
 [tool.uv.sources]
 # only works for gitlab ci/cd during uv sync
-"idms.common.constants" = { index = "internal-gitlab" }
+idms-common-constants = { index = "internal-gitlab" }
 
 [[tool.uv.index]]
 name = "internal-gitlab"
-url = "https://gitlab.rivm.nl/api/v4/projects/4654/packages/pypi/simple"
+url = "https://gitlab.rivm.nl/api/v4/projects/4682/packages/pypi/simple"
 
 [tool.setuptools_scm]
 fallback_version = "0.0.0"
