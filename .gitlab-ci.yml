@@ -6,17 +6,20 @@ stages:
 
 include:
   # Unit testing
-  - component: $CI_SERVER_FQDN/bioinformatics/pipelines/python/unittesting@0.2.0
+  - component: $CI_SERVER_FQDN/bioinformatics/pipelines/python/unittesting@0.2.1
     inputs:
       stage: test
   # Build packages
-  - component: $CI_SERVER_FQDN/bioinformatics/pipelines/python/build_package@0.2.0
+  - component: $CI_SERVER_FQDN/bioinformatics/pipelines/python/build_package@0.2.1
     inputs:
       stage: build
   # Publish packages
-  - component: $CI_SERVER_FQDN/bioinformatics/pipelines/python/publish_package@0.2.0
+  - component: $CI_SERVER_FQDN/bioinformatics/pipelines/python/publish_package@0.2.1
     inputs:
       job_name: publish_irods_package
+      username: oauth2
+      password: $PUBLISH_TOKEN
+      publish_url: ${CI_API_V4_URL}/projects/4682/packages/pypi
       stage: publish
 
 # Define rules for the job
