@@ -5,7 +5,7 @@ from irods.meta import iRODSMeta
 from irods.models import DataObject, Collection, CollectionMeta
 from irods.column import Criterion
 from irods.exception import CAT_SUCCESS_BUT_WITH_NO_INFO
-from .irods_helper import uuidshort, getmetaitem
+from idms.common.irods.irods_helper import uuidshort, getmetaitem
 
 #from constants import ATTR_LOCK
 from idms.common.constants.attribute_names import ATTR_LOCK
@@ -13,11 +13,11 @@ from idms.common.constants.attribute_names import ATTR_LOCK
 # For concurrent lock requests, a special metadata attr is added
 # to a collection while a new ticket is being created
 # This indicates if there are still processes requesting a lock
-# When this choose metadata is older than CHOOSE_TIMEOUT, it will 
+# When this choose metadata is older than CHOOSE_TIMEOUT, it will
 # probably be stale, and will be removed
 CHOOSE_TIMEOUT = 60
 
-# The next four rules implement a mechanism to lock 
+# The next four rules implement a mechanism to lock
 # exclusive acces to a collection, based on the bakery algorithm
 # Usage:
 #  1) Call lock_get_ticket (once) to get a ticket and a job id
@@ -26,18 +26,18 @@ CHOOSE_TIMEOUT = 60
 #  3) Run critical collection processing code
 #  4) Call lock_release_ticket upon finishing critical processing
 #
-# Jobs will be run order by ticket number, and when two jobs have the 
+# Jobs will be run order by ticket number, and when two jobs have the
 # same ticket numbers: by jobid
 
-Attrs = collections.namedtuple('Attrs', 
-    ['choose', 'description', 'ticket', 'timeout', 'runtime', 'valid_till', 
+Attrs = collections.namedtuple('Attrs',
+    ['choose', 'description', 'ticket', 'timeout', 'runtime', 'valid_till',
      'ticket_wildcard', 'class_wildcard', 'valid_till_wildcard', 'lock_wildcard', 'count_wildcard', 'all_lock_wildcard'])
 
 def attr_names(id='UNKNOWN', classname="none", attr_lock=ATTR_LOCK):
     """Returning names of locking attributes
         id:  ticket id
         classname: ticket class
-        
+
     """
     attrs = Attrs(
         f'{attr_lock}{classname}::choose',
@@ -80,7 +80,7 @@ def lock_get_ticket(collection, description, timeout, runtime, classname="none")
     query = collection.manager.sess.query(CollectionMeta.value).filter( \
         Criterion('=', Collection.id, collection.id)).filter( \
         Criterion('like', CollectionMeta.name, attrs.ticket_wildcard))
-    ticketnr = 0 
+    ticketnr = 0
     for r in query:
         if int(r[CollectionMeta.value]) > ticketnr:
             ticketnr = int(r[CollectionMeta.value])
@@ -115,7 +115,7 @@ def lock_get_ticket(collection, description, timeout, runtime, classname="none")
 
 def lock_check_turn(collection, id):
     # Check if this job is up for processing
-    # INPUT 
+    # INPUT
     #    session    : irodsSession object
     #    collection : collection name
     #    id         : job id, as retrieved with lock_get_ticket
@@ -141,7 +141,7 @@ def lock_check_turn(collection, id):
         ticket = int(r[CollectionMeta.value])
     if not ticket:
         return 2
-    
+
     # Extend my ticket
     check_time = getmetaitem(collection, attrs.timeout, 0)
     lock_extend_ticket(collection, id, check_time)
@@ -198,7 +198,7 @@ def lock_release_ticket(collection, id):
         Criterion('like', CollectionMeta.name, attrs.lock_wildcard))
     for r in query:
         meta_delete = iRODSMeta(r[CollectionMeta.name], r[CollectionMeta.value])
-        # Run this in a try - except to prevent concurrency errors 
+        # Run this in a try - except to prevent concurrency errors
         try:
             collection.metadata.remove(meta_delete)
         except CAT_SUCCESS_BUT_WITH_NO_INFO:
@@ -245,4 +245,3 @@ def lock_ticket_count(collection, description=None, classname="none"):
     result = int(next(query.get_results())[CollectionMeta.name])
 
     return result
-        
