@@ -5,10 +5,10 @@ from irods.meta import iRODSMeta
 from irods.models import DataObject, Collection, CollectionMeta
 from irods.column import Criterion
 from irods.exception import CAT_SUCCESS_BUT_WITH_NO_INFO
-from irods_helper import uuidshort, getmetaitem
+from .irods_helper import uuidshort, getmetaitem
 
 #from constants import ATTR_LOCK
-from idms.common.constants.attribute_name import ATTR_LOCK
+from idms.common.constants.attribute_names import ATTR_LOCK
 
 # For concurrent lock requests, a special metadata attr is added
 # to a collection while a new ticket is being created
