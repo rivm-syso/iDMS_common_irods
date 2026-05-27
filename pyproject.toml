@@ -8,6 +8,7 @@ dynamic = ["version"]
 requires-python = ">=3.11"
 description = "Utilities to work with IRODS components (AVUs, physical objects, etc.)"
 dependencies = ["idms-common-constants", 
+                "python-irodsclient==3.2.0",
                 "APScheduler"]
 
 [tool.setuptools.packages.find]
