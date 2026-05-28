@@ -12,7 +12,6 @@ from .irods_helper import localtimestamp
 from idms.common.constants.attribute_names import ATTR_RESOURCE_SPACETARGET, ATTR_RESOURCE_SPACELIMIT, ATTR_RESOURCE_MAXCOPIES, ATTR_TIERING_GROUP
 from idms.common.constants.attribute_names import ATTR_ARCHIVE_STATE, ATTR_ARCHIVE_DESIREDSTATE, ATTR_COLLSIZE,ATTR_PIPELINE_USEDBY, ATTR_RUNSHEET_STATE, ATTR_RUNSHEET_ID
 from idms.common.constants.attribute_names import ATTR_ARCHIVE_STAGE, ATTR_RESOURCE_PREFIX, ATTR_RESOURCE_ENABLED, ATTR_RESOURCE_AVAILABLE, ATTR_RESOURCE_TAR
-from .irods_sessions import irods_manager
 
 TRUE = 'true'
 FALSE = 'false'
@@ -495,12 +494,11 @@ class Tier:
 class Tierlist:
     """A list of tier objects for a specified tier_group
     """
-    def __init__(self, tier_group):
+    def __init__(self, irods_session, tier_group):
         self.tiers = []
-        with irods_manager.session() as session:
-            q = session.query(Resource.name, ResourceMeta).filter(
-                Criterion('=', ResourceMeta.name, ATTR_TIERING_GROUP)).filter(
-                Criterion('=', ResourceMeta.value, tier_group))
+        q = irods_session.query(Resource.name, ResourceMeta).filter(
+            Criterion('=', ResourceMeta.name, ATTR_TIERING_GROUP)).filter(
+            Criterion('=', ResourceMeta.value, tier_group))
         for row in q:
             self.add(Tier(tier=int(row[ResourceMeta.units]), resourcename=row[Resource.name]))
 

@@ -7,10 +7,6 @@ from irods.meta import iRODSMeta, AVUOperation
 from irods.column import Criterion
 from irods.exception import CAT_NO_ACCESS_PERMISSION, CollectionDoesNotExist, DataObjectDoesNotExist
 
-from .irods_sessions import irods_manager
-
-
-
 def qusermeta(irods_session, user_name):
     #with irods_manager.session() as session:
     q = irods_session.query(UserMeta.name, UserMeta.value, UserMeta.units).filter(
