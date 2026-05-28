@@ -445,17 +445,18 @@ class DatasetMgr:
 class Tier:
     """A storage tier, corresponding to an iRODS resource
     """
-    def __init__(self, tier, resourcename):
+    def __init__(self, irods_session, tier, resourcename):
         self.tiernumber = tier
         self.resourcename = resourcename
         self._resourcetags = []
         self._available = True
         self._availabilty_check_time = 0
+        self._irods_session = irods_session
         self.refresh()
 
     def refresh(self):
         self._resourcetags = []
-        meta = iqry.qresmetadict(self.resourcename)
+        meta = iqry.qresmetadict(self._irods_session, self.resourcename)
         for key in meta:
             if key.startswith(ATTR_RESOURCE_PREFIX) and meta[key] == 'true':
                 self._resourcetags.append(key)
@@ -500,7 +501,7 @@ class Tierlist:
             Criterion('=', ResourceMeta.name, ATTR_TIERING_GROUP)).filter(
             Criterion('=', ResourceMeta.value, tier_group))
         for row in q:
-            self.add(Tier(tier=int(row[ResourceMeta.units]), resourcename=row[Resource.name]))
+            self.add(Tier(irods_session, tier=int(row[ResourceMeta.units]), resourcename=row[Resource.name]))
 
     def add(self, tier):
         self.tiers.append(tier)
