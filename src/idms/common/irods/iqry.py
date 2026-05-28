@@ -59,10 +59,10 @@ def qcollmeta(irods_session, collection):
     return result
 
 
-def scollmetaval(irods_session, coll, attr, value, unit=None):
+def scollmetaval(irods_session, coll, attr, value, unit=None, force=False, atomic=True):
     if value == '':
         raise ValueError( 'Empty-string not allowed as value of AVU!') 
-    if unit is None and qcollmetaval(irods_session, coll, attr) == value:
+    if unit is None and qcollmetaval(irods_session, coll, attr) == value and not force:
         return
     #with irods_manager.session() as session:
     u = irods_session.collections.get(coll)
@@ -70,16 +70,20 @@ def scollmetaval(irods_session, coll, attr, value, unit=None):
     new_avu = iRODSMeta(attr, value, unit)
 
     # The atomic metadata operations are preferred, but require a higher permission level
-    try:
-        u.metadata.apply_atomic_operations(
-            *[AVUOperation(operation='remove', avu=i) for i in old_avus],
-            AVUOperation(operation='add', avu=new_avu)
-        )
-    except CAT_NO_ACCESS_PERMISSION:
+    do_classic = not atomic
+    if atomic:
+        try:
+            u.metadata.apply_atomic_operations(
+                *[AVUOperation(operation='remove', avu=i) for i in old_avus],
+                AVUOperation(operation='add', avu=new_avu)
+            )
+        except CAT_NO_ACCESS_PERMISSION:
+            do_classic = True
+    
+    if do_classic:
         for oa in old_avus:
             u.metadata.remove(oa)
-        u.metadata[attr] = new_avu
-
+        u.metadata.set(new_avu)
 
 
 def addcollmetaval(irods_session, coll, attr, value, unit=None):
