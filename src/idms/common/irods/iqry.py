@@ -1,7 +1,5 @@
 import json
-import sys
 import os
-import time
 from irods.models import Collection, CollectionMeta, DataObject, DataObjectMeta, User, UserMeta, Resource, ResourceMeta
 from irods.meta import iRODSMeta, AVUOperation
 from irods.column import Criterion
@@ -279,14 +277,14 @@ def qpathobjecttype(irods_session, path):
     #with irods_manager.session() as session:
     try:
         # Try to get it as a DataObject
-        obj = irods_session.data_objects.get(path)
+        _ = irods_session.data_objects.get(path)
         return 'dataobject'
     except (CollectionDoesNotExist, DataObjectDoesNotExist):
         pass
 
     try:
         # Try to get it as a Collection
-        coll = irods_session.collections.get(path)
+        _ = irods_session.collections.get(path)
         return 'path'
     except CollectionDoesNotExist:
         pass

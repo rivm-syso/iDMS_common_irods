@@ -2,7 +2,7 @@ import collections
 import time
 from datetime import timezone
 from irods.meta import iRODSMeta
-from irods.models import DataObject, Collection, CollectionMeta
+from irods.models import Collection, CollectionMeta
 from irods.column import Criterion
 from irods.exception import CAT_SUCCESS_BUT_WITH_NO_INFO
 from idms.common.irods.irods_helper import uuidshort, getmetaitem

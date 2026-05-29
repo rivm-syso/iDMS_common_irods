@@ -1,5 +1,4 @@
 import ssl
-import sys
 import threading
 import time
 import datetime
@@ -66,8 +65,8 @@ def create_session(envdata, user, use_pam=False):
         refresh_time=300,
         **ssl_settings)
 
-def objfromlist(l, a, v):
-    for i in l:
+def objfromlist(li, a, v):
+    for i in li:
         if getattr(i, a) == v:
             return i
     return None
@@ -109,6 +108,10 @@ class PoolObject():
     def reportdata(self):
         return { 'Timestamp': datetime.datetime.fromtimestamp(self.timestamp) }
 
+    def debug(self):
+        print('      ================= PoolObject =================')
+        print(f'        ID {self.id}, TIME: {self.timestamp}')
+        
 class SessionPool():
     """Pool of irodsSessions for one user and irods environment
     """
@@ -141,7 +144,7 @@ class SessionPool():
             if len(self._idle) > self.targetsize:
                 self._idle.sort(key=lambda s: s.timestamp)
                 index = len(self._idle)
-                for sess in self._idle:
+                for sess in list(self._idle):
                     idle_remove_age = self.idle_timeout // index
                     if time.time() - sess.timestamp > idle_remove_age:
                         removelist.append(sess)
@@ -156,7 +159,7 @@ class SessionPool():
 
             # Remove long-running active sessions
             removelist = []
-            for sess in self._active:
+            for sess in list(self._active):
                 if time.time() - sess.timestamp > self.active_timeout:
                     removelist.append(sess)
             if removelist:
@@ -170,7 +173,8 @@ class SessionPool():
             if not self._idle:
                 poolentry = PoolObject(create_session(self.envdata, user))
             else:
-                poolentry = self._idle.pop()
+                latest_idx = max(range(len(self._idle)), key=lambda i: self._idle[i].timestamp)
+                poolentry = self._idle.pop(latest_idx)
             poolentry.update()
             self._active.append(poolentry)
         return Session(self, poolentry.obj)
@@ -197,6 +201,16 @@ class SessionPool():
                 sess.obj.cleanup()
             self._idle = []
             self._active = []
+
+    def debug(self):
+        print('    ================= SessionPool =================')
+        print('      ================== IDLE =====================')
+        for sess in self._idle:
+            sess.debug()
+        print('      ================== ACTIVE ===================')
+        for sess in self._active:
+            sess.debug()
+                            
 
 
 class SessionPoolManager():
@@ -239,6 +253,13 @@ class SessionPoolManager():
         with self._lock:
             if user.username in self._pools:
                 del self._pools[user.username]
+                
+    def debug(self):
+        print('  ================= SessionPoolManager =================')
+        for user, mgr in self._pools.items():
+            print(f'    User: {user:13}')
+            mgr.debug()
+                
 
 class MultiSessionManager():
     """Manage the SessionManagers for 
@@ -253,7 +274,7 @@ class MultiSessionManager():
         self.scheduler.add_job(func=self.cleanup, trigger="interval", seconds=120, jitter=15)
         self.scheduler.start()
         with self._lock:
-            for envname, envdata in irods_envs:
+            for envname, envdata in irods_envs.items():
                 self._managers[envname] = SessionPoolManager(envdata, refresh_time=conn_refresh_time)
         
         #self._get_current_user = get_user_func
@@ -265,7 +286,8 @@ class MultiSessionManager():
         for current_user
         """
         with self._lock:
-            mgr = self._managers.get(user.environment)
+            environment = user.environment if hasattr(user, 'environment') else '__NONE__'
+            mgr = self._managers.get(environment)
             if mgr:
                 return mgr.session(user)
         return None
@@ -289,5 +311,11 @@ class MultiSessionManager():
         with self._lock:
             if (manager := self._managers.get(user.environment)):
                 manager.remove(user)
+                
+    def debug(self):
+        print('================= MultiSessionManager =================')
+        for environ, mgr in self._managers.items():
+            print(f'  Environment: {environ:13}')
+            mgr.debug()
 
 irods_manager = MultiSessionManager()

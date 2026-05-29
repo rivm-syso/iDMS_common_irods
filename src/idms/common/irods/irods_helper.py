@@ -19,10 +19,6 @@ from datetime import timezone
 from idms.common.constants.attribute_names import META_SUFFIXLENGTH, ATTR_DATASETID
 #from constants import *
 
-from irods.exception import (
-    CATALOG_ALREADY_HAS_ITEM_BY_THAT_NAME,
-    CAT_SUCCESS_BUT_WITH_NO_INFO
-)
 
 BUF_SIZE = 1024 * 1024 * 4
 

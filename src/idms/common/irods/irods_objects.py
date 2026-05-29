@@ -1,9 +1,8 @@
 
 import logging
-import time
 import os
 from . import iqry
-from irods.models import DataObject, Collection, CollectionMeta, Resource, \
+from irods.models import Collection, CollectionMeta, Resource, \
     ResourceMeta
 from irods.column import Criterion
 from irods.meta import iRODSMeta
@@ -125,7 +124,7 @@ class State:
     def values_in_all_active(self, attr):
         result = set()
         for r in self._resources:
-            if not (v := r.meta(attr)) is None:
+            if (v := r.meta(attr)) is not None:
                 result.add(v)
         return result
 
@@ -260,7 +259,7 @@ class State:
     def __sub__(self, other):
         ret_val = []
         for s in self._state:
-            if not s in other._state:
+            if s not in other._state:
                 ret_val.append(s)
         return ret_val
 
@@ -408,7 +407,7 @@ class Dataset:
                     if c.getmeta(ATTR_RUNSHEET_STATE) != 'done':
                         active_runsheet_found = True
                         break
-                if active_runsheet_found == False:
+                if not active_runsheet_found:
                     # The runsheet in USEDBY is not found anywhere
                     logger.debug(f'Remove runsheet {runsheet} from usage list on collection {self._coll}')
                     if not check:
@@ -436,7 +435,7 @@ class DatasetMgr:
         self.irodsSession = irodsSession
 
     def get(self, coll):
-        if not coll in self._colls:
+        if coll not in self._colls:
             self._colls[coll] = Dataset(self, coll)
         return self._colls.get(coll)
 
@@ -445,21 +444,37 @@ class DatasetMgr:
 class Tier:
     """A storage tier, corresponding to an iRODS resource
     """
-    def __init__(self, irods_session, tier, resourcename):
+    def __init__(self, irods_session_or_factory, tier, resourcename):
         self.tiernumber = tier
         self.resourcename = resourcename
         self._resourcetags = []
         self._available = True
         self._availabilty_check_time = 0
-        self._irods_session = irods_session
+        if callable(irods_session_or_factory):
+            self.session_factory = irods_session_or_factory
+            self.is_lazy = True
+        else:
+            self.irods_session = irods_session_or_factory
+            self.is_lazy = False            
         self.refresh()
+
+    def _get_session(self):
+        if self.is_lazy:
+            return self.session_factory()
+        else:
+            from contextlib import contextmanager
+            @contextmanager
+            def dummy_cm():
+                yield self.irods_session
+            return dummy_cm()
 
     def refresh(self):
         self._resourcetags = []
-        meta = iqry.qresmetadict(self._irods_session, self.resourcename)
-        for key in meta:
-            if key.startswith(ATTR_RESOURCE_PREFIX) and meta[key] == 'true':
-                self._resourcetags.append(key)
+        with self._get_session() as irods_session:
+            meta = iqry.qresmetadict(irods_session, self.resourcename)
+            for key in meta:
+                if key.startswith(ATTR_RESOURCE_PREFIX) and meta[key] == 'true':
+                    self._resourcetags.append(key)
 
     def available(self):
         """Check if resource is available and enabled
@@ -480,7 +495,7 @@ class Tier:
         if self._resourcetags:
             present = True
             for tag in list(taglist):
-                if not tag in self._resourcetags:
+                if tag not in self._resourcetags:
                     present = False
             return present
         else:
@@ -495,13 +510,31 @@ class Tier:
 class Tierlist:
     """A list of tier objects for a specified tier_group
     """
-    def __init__(self, irods_session, tier_group):
+    def __init__(self, irods_session_or_factory, tier_group):
         self.tiers = []
-        q = irods_session.query(Resource.name, ResourceMeta).filter(
-            Criterion('=', ResourceMeta.name, ATTR_TIERING_GROUP)).filter(
-            Criterion('=', ResourceMeta.value, tier_group))
+        if callable(irods_session_or_factory):
+            self.session_factory = irods_session_or_factory
+            self.is_lazy =  True
+        else:
+            self.irods_session = irods_session_or_factory
+            self.is_lazy = False
+        
+        with self._get_session() as irods_session:
+            q = irods_session.query(Resource.name, ResourceMeta).filter(
+                Criterion('=', ResourceMeta.name, ATTR_TIERING_GROUP)).filter(
+                Criterion('=', ResourceMeta.value, tier_group))
         for row in q:
-            self.add(Tier(irods_session, tier=int(row[ResourceMeta.units]), resourcename=row[Resource.name]))
+            self.add(Tier(irods_session_or_factory, tier=int(row[ResourceMeta.units]), resourcename=row[Resource.name]))
+            
+    def _get_session(self):
+        if self.is_lazy:
+            return self.session_factory()
+        else:
+            from contextlib import contextmanager
+            @contextmanager
+            def dummy_cm():
+                yield self.irods_session
+            return dummy_cm()
 
     def add(self, tier):
         self.tiers.append(tier)
