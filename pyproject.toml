@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "idms-common-irods"
 dynamic = ["version"]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 description = "Utilities to work with IRODS components (AVUs, physical objects, etc.)"
 dependencies = [
     "idms-common-constants>=0.0.8",
