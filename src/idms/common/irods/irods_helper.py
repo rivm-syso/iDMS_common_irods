@@ -410,3 +410,22 @@ def object_with_type(irodsSession, path):
     except CollectionDoesNotExist:
         pass
     return None, None
+
+
+def specific_q(irodsSession, sql, args=None):
+    alias = f'specific_q_{int(time.time())}'
+#    columns = [DataObject.name, DataObject.id] # optional, if we want to get results by key
+    query = SpecificQuery(irodsSession, sql, alias, args=args)
+    # register specific query in iCAT
+    try:
+        _ = query.remove()
+    except:
+        pass
+    _ = query.register()
+    try:
+        results = list(query)
+    except CAT_NO_ROWS_FOUND:
+        results = []
+    # delete specific query
+    _ = query.remove()
+    return results
