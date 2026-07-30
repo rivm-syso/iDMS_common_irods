@@ -10,7 +10,7 @@ from irods.meta import iRODSMeta
 from .irods_helper import localtimestamp
 from idms.common.constants.attribute_names import ATTR_RESOURCE_SPACETARGET, ATTR_RESOURCE_SPACELIMIT, ATTR_RESOURCE_MAXCOPIES, ATTR_TIERING_GROUP
 from idms.common.constants.attribute_names import ATTR_ARCHIVE_STATE, ATTR_ARCHIVE_DESIREDSTATE, ATTR_COLLSIZE,ATTR_PIPELINE_USEDBY, ATTR_RUNSHEET_STATE, ATTR_RUNSHEET_ID
-from idms.common.constants.attribute_names import ATTR_ARCHIVE_STAGE, ATTR_RESOURCE_PREFIX, ATTR_RESOURCE_ENABLED, ATTR_RESOURCE_AVAILABLE, ATTR_RESOURCE_TAR
+from idms.common.constants.attribute_names import ATTR_ARCHIVE_ONLINE, ATTR_ARCHIVE_STAGE, ATTR_RESOURCE_PREFIX, ATTR_RESOURCE_ENABLED, ATTR_RESOURCE_AVAILABLE, ATTR_RESOURCE_TAR
 
 TRUE = 'true'
 FALSE = 'false'
@@ -420,12 +420,13 @@ class Dataset:
             use = None
 
         if not use:
-            logger.debug(f'Clear STAGE attr on collection {self}')
+            logger.debug(f'Clear STAGE and ONLINE attr on collection {self}')
             if not check:
                 self._collobj.metadata._delete_all_values(ATTR_ARCHIVE_STAGE)
+                self._collobj.metadata._delete_all_values(ATTR_ARCHIVE_ONLINE)
                 self._meta = None
             else:
-                print(f'Clear STAGE attr on collection {self}')
+                print(f'Clear STAGE and ONLINE attr on collection {self}')
 
 
 class DatasetMgr:

@@ -14,6 +14,7 @@ from irods.session import iRODSSession
 from irods.meta import iRODSMeta
 from irods.models import DataObject, Collection, CollectionMeta
 from irods.column import Criterion
+from irods.query import SpecificQuery
 from irods.exception import DataObjectDoesNotExist, CollectionDoesNotExist
 from datetime import timezone
 from idms.common.constants.attribute_names import META_SUFFIXLENGTH, ATTR_DATASETID
@@ -410,3 +411,22 @@ def object_with_type(irodsSession, path):
     except CollectionDoesNotExist:
         pass
     return None, None
+
+
+def specific_q(irodsSession, sql, args=None):
+    alias = f'specific_q_{int(time.time())}'
+#    columns = [DataObject.name, DataObject.id] # optional, if we want to get results by key
+    query = SpecificQuery(irodsSession, sql, alias, args=args)
+    # register specific query in iCAT
+    try:
+        _ = query.remove()
+    except:
+        pass
+    _ = query.register()
+    try:
+        results = list(query)
+    except CAT_NO_ROWS_FOUND:
+        results = []
+    # delete specific query
+    _ = query.remove()
+    return results
