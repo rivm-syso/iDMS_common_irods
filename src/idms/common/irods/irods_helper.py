@@ -14,6 +14,7 @@ from irods.session import iRODSSession
 from irods.meta import iRODSMeta
 from irods.models import DataObject, Collection, CollectionMeta
 from irods.column import Criterion
+from irods.query import SpecificQuery
 from irods.exception import DataObjectDoesNotExist, CollectionDoesNotExist
 from datetime import timezone
 from idms.common.constants.attribute_names import META_SUFFIXLENGTH, ATTR_DATASETID
