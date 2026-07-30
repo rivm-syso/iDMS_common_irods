@@ -420,13 +420,13 @@ class Dataset:
             use = None
 
         if not use:
-            logger.debug(f'Clear STAGE attr on collection {self}')
+            logger.debug(f'Clear STAGE and ONLINE attr on collection {self}')
             if not check:
                 self._collobj.metadata._delete_all_values(ATTR_ARCHIVE_STAGE)
                 self._collobj.metadata._delete_all_values(ATTR_ARCHIVE_ONLINE)
                 self._meta = None
             else:
-                print(f'Clear STAGE attr on collection {self}')
+                print(f'Clear STAGE and ONLINE attr on collection {self}')
 
 
 class DatasetMgr:
