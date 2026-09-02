@@ -274,6 +274,21 @@ class State:
         return repr
 
 class StateList:
+    """Manages and optimizes the selection of resource states for a dataset/collection.
+
+    A state is represented as a bitmask string of length `len(resources)`, where 
+    each bit corresponds to the active (1) or inactive (0) status of a specific 
+    storage/compute resource (e.g., archive, disk, backup).
+
+    Workflow:
+        1. Initialize with all possible resource state combinations (2^N).
+        2. Filter candidate states by applying policy constraints 
+           (e.g., ATTR_ARCHIVE_STAGE, ATTR_ARCHIVE_ONLINE) via `try_to_apply()`.
+        3. Rank remaining candidates using cost functions via `sort_and_cut()`:
+            - Minimize required data transfers (`State.datamove`).
+            - Minimize state transitions relative to current state (`State.migrations`).
+        4. Select the top-ranked state as the target execution plan.
+    """
     def __init__(self, resources):
         self._resources = resources
         self._states = []
