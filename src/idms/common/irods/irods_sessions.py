@@ -1,3 +1,5 @@
+import atexit
+import os
 import ssl
 import threading
 import time
@@ -6,8 +8,6 @@ import logging
 
 #from requests import session
 from apscheduler.schedulers.background import BackgroundScheduler
-#from flask import request, current_app
-#from flask_login import current_user
 from irods.session import iRODSSession
 from irods.version import __version__
 
@@ -196,11 +196,7 @@ class SessionPool():
         return data   
 
     def __del__(self):
-        with self._lock:
-            for sess in self._idle + self._active:
-                sess.obj.cleanup()
-            self._idle = []
-            self._active = []
+        self.close()
 
     def debug(self):
         print('    ================= SessionPool =================')
@@ -210,6 +206,13 @@ class SessionPool():
         print('      ================== ACTIVE ===================')
         for sess in self._active:
             sess.debug()
+            
+    def close(self):
+        with self._lock:
+            for sess in self._idle + self._active:
+                sess.obj.cleanup()
+            self._idle = []
+            self._active = []        
                             
 
 
@@ -256,9 +259,14 @@ class SessionPoolManager():
                 
     def debug(self):
         print('  ================= SessionPoolManager =================')
-        for user, mgr in self._pools.items():
+        for user, sp in self._pools.items():
             print(f'    User: {user:13}')
-            mgr.debug()
+            sp.debug()
+            
+    def close(self):
+        for sp in self._pools.values():
+            sp.close()
+        self._pools = {}
                 
 
 class MultiSessionManager():
@@ -269,17 +277,38 @@ class MultiSessionManager():
         self._managers = {}
         self._lock = threading.RLock()
 
-    def init_app(self, irods_envs, conn_refresh_time=120):
-        self.scheduler = BackgroundScheduler(daemon=True)
-        self.scheduler.add_job(func=self.cleanup, trigger="interval", seconds=120, jitter=15)
-        self.scheduler.start()
+    def init_app(self, irods_envs, conn_refresh_time=120, background_cleanup=False):
+        executors = {
+            'default': {'type': 'threadpool', 'max_workers': 2}
+        }
+        if background_cleanup:
+            self.scheduler = BackgroundScheduler(executors=executors, daemon=True)
+            self.scheduler.add_job(
+                func=self.cleanup,
+                trigger="interval",
+                seconds=120,
+                jitter=15,
+                max_instances=1
+            )
+
+            # Prevent APScheduler from submitting jobs during interpreter teardown
+            atexit.register(self.scheduler_shutdown)
+            logging.debug(f'PID: {os.getpid()}: start scheduler')
+            self.scheduler.start()
+
         with self._lock:
             for envname, envdata in irods_envs.items():
                 self._managers[envname] = SessionPoolManager(envdata, refresh_time=conn_refresh_time)
         
-        #self._get_current_user = get_user_func
-
-
+    def scheduler_shutdown(self):
+        """Gracefully shutdown scheduler when interpreter exits."""
+        logging.debug(f'PID: {os.getpid()}: scheduler_shutdown')
+        if hasattr(self, 'scheduler') and self.scheduler.running:
+            logging.debug('Shutdown scheduler thread')
+            try:
+                self.scheduler.shutdown(wait=False)
+            except Exception:
+                pass
  
     def session(self, user):  #here we used flask.current_user!
         """ Return an irods session object
@@ -317,5 +346,11 @@ class MultiSessionManager():
         for environ, mgr in self._managers.items():
             print(f'  Environment: {environ:13}')
             mgr.debug()
+            
+    def close(self):
+        logging.debug(f'PID: {os.getpid()}: MultiSessionManager.close')
+        self.scheduler_shutdown()
+        for _, manager in self._managers.items():
+            manager.close()
 
 irods_manager = MultiSessionManager()
