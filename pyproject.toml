@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "idms-common-irods"
-licence = { text = "EUPL-1.2"}
+license = { text = "EUPL-1.2" }
 dynamic = ["version"]
 requires-python = ">=3.10"
 description = "Utilities to work with IRODS components (AVUs, physical objects, etc.)"
