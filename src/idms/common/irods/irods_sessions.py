@@ -87,7 +87,7 @@ class Session:
 
 class PoolObject:
     counter = 0
-    def __init__(self, obj, active_timeout=1, idle_timeout=1):
+    def __init__(self, obj, active_timeout=3600, idle_timeout=1):
         self.idle_timeout = idle_timeout
         self.id = PoolObject.counter
         PoolObject.counter += 1
@@ -121,7 +121,7 @@ class PoolObject:
 class SessionPool:
     """Pool of irodsSessions for one user and irods environment
     """
-    def __init__(self, envdata, targetsize=0, default_active_timeout=1, idle_timeout=1):
+    def __init__(self, envdata, targetsize=0, default_active_timeout=3600, idle_timeout=1):
         self.targetsize = targetsize
         self._idle = []
         self._active_map = {}
@@ -155,7 +155,7 @@ class SessionPool:
             if len(self._idle) > self.targetsize:
                 remain_idle = []
                 for sess in self._idle:
-                    if (now > sess.idle_timeout_timestamp and (len(self._idle) - len(to_destroy))) > self.targetsize:
+                    if (now > sess.idle_timeout_timestamp) and (len(self._idle) - len(to_destroy) > self.targetsize):
                         to_destroy.append(sess)
                         self.stat_idle_destroyed += 1
                     else:
@@ -241,7 +241,7 @@ class SessionPoolManager:
     """Manage a set of SessionPools,
     one for each logged in user
     """
-    def __init__(self, envdata, refresh_time=120, default_active_timeout=1, idle_timeout=1):
+    def __init__(self, envdata, refresh_time=120, default_active_timeout=3600, idle_timeout=1):
         self.envdata = envdata
         self._pools = {}
         self._lock = threading.RLock()
