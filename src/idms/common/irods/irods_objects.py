@@ -108,6 +108,11 @@ class State:
                     self._state.append(resource)
                 else:
                     self._nostate.append(resource)
+                    
+    def get_first_available_resource(self):
+        if self._state:
+            return self._state[0]
+        return None
 
     def set_all(self):
         self._state = []
