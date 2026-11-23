@@ -1,5 +1,5 @@
 import pytest
-from src.idms.common.irods.irods_helper import OBJECT_TYPE
+from idms.common.irods.irods_helper import OBJECT_TYPE
 
 
 @pytest.mark.unit

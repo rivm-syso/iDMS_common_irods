@@ -43,33 +43,33 @@ class ENoUniqueCollection(Exception):
     """
     pass
 
-def irodsConnect(irodsfile="", use_ssl=False, **kwargs):
-    """Connect to irods iCAT and return iRODSSession object
+# def irodsConnect(irodsfile="", use_ssl=False, **kwargs):
+#     """Connect to irods iCAT and return iRODSSession object
 
-    Args:
-        irodsfile: irods environment file to use.
-        use_ssl: use ssl if True
+#     Args:
+#         irodsfile: irods environment file to use.
+#         use_ssl: use ssl if True
 
-    Returns:
-        iRODSSession object
-    """
-    if irodsfile:
-        envFile = irodsfile
-    else:
-        try:
-            envFile = os.environ['IRODS_ENVIRONMENT_FILE']
-        except KeyError:
-            envFile = os.path.expanduser('~/.irods/irods_environment.json')
+#     Returns:
+#         iRODSSession object
+#     """
+#     if irodsfile:
+#         envFile = irodsfile
+#     else:
+#         try:
+#             envFile = os.environ['IRODS_ENVIRONMENT_FILE']
+#         except KeyError:
+#             envFile = os.path.expanduser('~/.irods/irods_environment.json')
 
-    if use_ssl:
-        context = ssl._create_unverified_context(purpose=ssl.Purpose.SERVER_AUTH,
-                                             cafile=None, capath=None, cadata=None)
-        ssl_settings = {'irods_ssl_ca_certificate_file': '/etc/irods/ssl/irods.crt',
-                        'ssl_context': context}
-        session = iRODSSession(irods_env_file=envFile, **ssl_settings, **kwargs)
-    else:
-        session = iRODSSession(irods_env_file=envFile, **kwargs)
-    return session
+#     if use_ssl:
+#         context = ssl._create_unverified_context(purpose=ssl.Purpose.SERVER_AUTH,
+#                                              cafile=None, capath=None, cadata=None)
+#         ssl_settings = {'irods_ssl_ca_certificate_file': '/etc/irods/ssl/irods.crt',
+#                         'ssl_context': context}
+#         session = iRODSSession(irods_env_file=envFile, **ssl_settings, **kwargs)
+#     else:
+#         session = iRODSSession(irods_env_file=envFile, **kwargs)
+#     return session
 
 class Dataset:
     """Dataset class that holds a dataset location and possible suffix length

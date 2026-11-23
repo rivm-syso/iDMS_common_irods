@@ -10,8 +10,9 @@ requires-python = ">=3.10"
 description = "Utilities to work with IRODS components (AVUs, physical objects, etc.)"
 dependencies = [
     "idms-common-constants>=0.0.8",
-    "python-irodsclient",
-    "APScheduler"
+    "python-irodsclient>=3.1.0",
+    "typing-extensions>=4.4",
+    "pydantic>=2.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -34,13 +35,13 @@ search_parent_directories = true
 
 [dependency-groups]
 dev = [
-    "pytest>=8.0.0",
+    "pytest>=9.0.0",
     "pytest-cov>=5.0.0"
 ]
 
 [tool.pytest]
 strict_config = true
-strict_markers = false
+strict_markers = true
 strict_parametrization_ids = false
 strict_xfail = true
 
@@ -53,7 +54,6 @@ addopts = [
 ]
 
 pythonpath = [
-    ".",
     "src"
 ]
 
@@ -68,20 +68,13 @@ norecursedirs = [
 
 markers = [
     "unit: Tests individual functions or small units of code in isolation",
-    "integration: Tests how multiple components or services work together",
-    "e2e: Simulates real-world end-to-end user scenarios",
-    "regression: Ensures that previously fixed bugs stay fixed",
-    "smoke: Quick checks to verify core system functionality",
+    "irods: test against live irods server",
 ]
 
 # pytest-cov configuration
 [tool.coverage.report]
 exclude_lines = [
     "if __name__ == '__main__'",
-]
-
-omit = [
-    "test/*"
 ]
 
 [tool.coverage.xml]
